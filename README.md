@@ -93,7 +93,7 @@ chg_net/
 
 | Document | Purpose |
 |----------|---------|
-| [`docs/implementation_notes.md`](docs/implementation_notes.md) | Paper vs engineering choices |
+| [`docs/implementation_notes.md`](docs/implementation_notes.md) | Paper choices |
 | [`docs/architecture.md`](docs/architecture.md) | Module map and data flow |
 | [`docs/sdd_preprocessing.md`](docs/sdd_preprocessing.md) | SDD robustness and tensors |
 | [`docs/carla_export.md`](docs/carla_export.md) | CSV schema and coordinate policy |
