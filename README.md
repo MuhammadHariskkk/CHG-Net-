@@ -100,4 +100,3 @@ chg_net/
 
 ## License
 
-MIT (recommended; confirm with your institution before publishing).
