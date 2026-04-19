@@ -50,7 +50,7 @@ Specification: [`docs/carla_export.md`](docs/carla_export.md).
 python scripts/plot_trajectories.py --config configs/default.yaml --checkpoint outputs/checkpoints/checkpoint_best.pt --split val
 ```
 
-## Tests (Phase 11)
+## Tests 
 
 From the `chg_net` directory, with the package installed editable:
 
