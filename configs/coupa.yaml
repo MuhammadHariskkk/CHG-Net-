@@ -1,0 +1,7 @@
+# Scene-specific overrides: coupa
+experiment:
+  name: chg_net_sdd_coupa
+
+data:
+  scene_filter:
+    - coupa

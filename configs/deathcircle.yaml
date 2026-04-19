@@ -1,0 +1,7 @@
+# Scene-specific overrides: deathCircle (SDD naming)
+experiment:
+  name: chg_net_sdd_deathcircle
+
+data:
+  scene_filter:
+    - deathCircle

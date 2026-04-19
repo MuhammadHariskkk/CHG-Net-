@@ -1,0 +1,7 @@
+# Scene-specific overrides: little
+experiment:
+  name: chg_net_sdd_little
+
+data:
+  scene_filter:
+    - little

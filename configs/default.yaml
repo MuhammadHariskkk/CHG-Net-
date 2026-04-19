@@ -1,0 +1,157 @@
+# CHG-Net default configuration.
+# Labels: **paper-specified** where cited in comments; else **engineering assumption**.
+
+experiment:
+  name: chg_net
+  seed: 42
+  deterministic_torch: false
+
+# **Paper-specified**: observation 8 frames, prediction 12 frames, 2.5 Hz sampling (SDD).
+data:
+  dataset: sdd
+  raw_root: data/raw/sdd
+  processed_root: data/processed/sdd
+  obs_len: 8
+  pred_len: 12
+  sample_rate_hz: 2.5
+  # **Engineering assumption**: minimum track length in frames (obs + pred) for a valid window.
+  min_track_len_frames: 20
+  # Drop agents with invalid coords (NaN/inf or out of image bounds if bounds provided).
+  filter_invalid_coords: true
+  # Optional [min_x, min_y, max_x, max_y]; null = skip bounds check (image-plane coords).
+  image_bounds: null
+  num_workers: 4
+  pin_memory: true
+  # **Engineering assumption**: annotation timestamps are on the native video grid (SDD commonly 30 Hz).
+  source_fps: 30.0
+  # Stride between prediction windows on the resampled 1/sample_rate_hz timeline (1 = dense sliding).
+  window_stride: 1
+  # If true, an agent is included only when valid (not lost, in-bounds) on every obs and future step.
+  require_full_window_valid: true
+  # Train/val/test by top-level SDD scene folder name (see docs/sdd_preprocessing.md). **Engineering assumption**:
+  # not specified in CHG-Net paper; override in YAML for your benchmark protocol.
+  splits:
+    train: [gates, hyang, little, nexus, quad, coupa]
+    val: [deathCircle]
+    test: [bookstore]
+  preprocess:
+    # Written under processed_root: samples + metadata (Phase 2).
+    meta_filename: preprocess_meta.json
+    index_filename: dataset_index.json
+    samples_prefix: samples_chunk_
+    chunk_size: 0
+
+# **Paper-specified** (high level): class embedding 16, graph hidden 64, GMM K=3, micro-TCN k=3, 2 layers.
+model:
+  class_embedding_dim: 16
+  graph_hidden_dim: 64
+  num_gmm_components: 3
+  micro_tcn:
+    kernel_size: 3
+    num_layers: 2
+    dilation_base: 2
+  # ST-GCN (Phase 5): hidden size defaults to ``graph_hidden_dim`` in code if not overridden.
+  stgcn:
+    temporal_kernel_size: 3
+    dropout: 0.0
+  dropout: 0.0
+
+# CHG construction (Phase 3). Angles/cosines follow CHG-Net edge design; eps is **engineering assumption**.
+graph:
+  # Minimum norm for position/velocity vectors when forming unit directions for cos(theta_ij).
+  vec_eps: 1.0e-6
+
+# Direction-aware interaction mask: m_ij = alpha*wd + beta*wv + gamma*wh (**paper-specified** form).
+# Thresholding on m_ij or on masked edges is **engineering assumption** (tuned on validation per paper).
+masking:
+  alpha: 1.0
+  beta: 1.0
+  gamma: 1.0
+  apply_threshold: false
+  # If apply_threshold true, edges with m_ij below this value are zeroed (**engineering assumption**).
+  threshold: 0.0
+
+# Label taxonomy for SDD string labels → internal ids (see data/label_mapping.md).
+labels:
+  # full: pedestrian, cyclist, vehicle, skater, other | collapsed_3: pedestrian, cyclist, vehicle
+  taxonomy_mode: full
+  # When taxonomy_mode is collapsed_3, map skater to this internal class: cyclist | pedestrian | other
+  collapse_skater_as: cyclist
+  # Unknown / misc raw labels map to other (deterministic vocabulary order in preprocessing).
+  unknown_internal_class: other
+  # When taxonomy_mode is collapsed_3, map internal `other` to this class (training head has 3 classes only).
+  collapse_other_as: pedestrian
+  # Save raw label counts and vocabulary in processed metadata (**engineering assumption**: output format).
+  emit_label_stats: true
+
+# **Paper-specified**: batch 64, LR 1e-3 (other optim hyperparameters may be engineering).
+training:
+  batch_size: 64
+  learning_rate: 1.0e-3
+  weight_decay: 0.0
+  max_epochs: 100
+  grad_clip_norm: 1.0
+  log_every_n_steps: 50
+  val_every_n_epochs: 1
+  checkpoint_dir: outputs/checkpoints
+  history_dir: outputs/history
+  save_best_only: true
+  optimizer: adam
+  # Phase 8: which validation key to minimize/maximize for checkpoint_best.pt (see CHGTrainer).
+  best_checkpoint_metric: val_ade
+  best_checkpoint_lower_is_better: true
+
+evaluation:
+  split: val
+  batch_size: 64
+  num_workers: 2
+  # Metrics on deterministic (highest mixture weight) trajectory per **paper-specified** inference.
+  deterministic_inference: true
+  results_csv: outputs/metrics/eval_results.csv
+
+inference:
+  batch_size: 64
+  num_workers: 2
+  checkpoint_path: null
+  predictions_npz: null
+
+# CARLA-first export (details in docs/carla_export.md).
+carla_export:
+  output_dir: outputs/carla_export
+  # one_scene_per_file | one_batch_per_file | single_combined (**engineering assumption**: layout options).
+  file_layout: one_scene_per_file
+  coordinate_mode: raw
+  # Optional path to JSON/YAML transform (future); null = raw image-plane coords only.
+  world_transform_path: null
+  include_observed: true
+  include_ground_truth: false
+  include_prediction: true
+  # List of export mode names: deterministic | multimodal | ground_truth | combined (Phase 9).
+  export_modes:
+    - deterministic
+  # Reproducible row ordering (see docs/carla_export.md); keep sample_rate_hz in sync with data.sample_rate_hz.
+  sort_rows: true
+  float_format: "%.6f"
+  sample_rate_hz: 2.5
+
+outputs:
+  root: outputs
+  figures: outputs/figures
+
+# Matplotlib debug plots (Phase 10); primary playback path is CARLA CSV.
+visualization:
+  # Default output directory for scripts/plot_trajectories.py (falls back to outputs.figures).
+  output_dir: null
+  dpi: 120
+  figsize_inches: [8.0, 8.0]
+  linewidth_obs: 1.5
+  linewidth_fut: 1.8
+  linewidth_pred: 2.0
+  alpha_obs: 0.85
+  alpha_fut: 0.75
+  alpha_pred: 0.9
+  show_legend: true
+  plot_ground_truth_future: true
+  plot_deterministic_prediction: true
+  plot_multimodal_modes: false
+  multimodal_alpha: 0.35

@@ -1,0 +1,11 @@
+# Stanford Drone Dataset — repository-wide SDD defaults.
+# Merge after configs/default.yaml.
+
+experiment:
+  name: chg_net_sdd
+
+data:
+  raw_root: data/raw/sdd
+  processed_root: data/processed/sdd
+  # null = all scenes discovered under raw_root (**Phase 2** resolves discovery and splits).
+  scene_filter: null

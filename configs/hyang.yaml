@@ -1,0 +1,7 @@
+# Scene-specific overrides: hyang
+experiment:
+  name: chg_net_sdd_hyang
+
+data:
+  scene_filter:
+    - hyang

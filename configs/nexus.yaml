@@ -1,0 +1,7 @@
+# Scene-specific overrides: nexus
+experiment:
+  name: chg_net_sdd_nexus
+
+data:
+  scene_filter:
+    - nexus

@@ -1,0 +1,7 @@
+# Scene-specific overrides: bookstore
+experiment:
+  name: chg_net_sdd_bookstore
+
+data:
+  scene_filter:
+    - bookstore

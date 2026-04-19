@@ -1,0 +1,94 @@
+Metadata-Version: 2.1
+Name: chgnet
+Version: 0.1.0
+Summary: CHG-Net: direction-aware heterogeneous graph trajectory prediction (PyTorch)
+Author: CHG-Net contributors
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: torch<3.0.0,>=2.0.0
+Requires-Dist: numpy<3.0.0,>=1.24.0
+Requires-Dist: pandas<3.0.0,>=2.0.0
+Requires-Dist: matplotlib<4.0.0,>=3.7.0
+Requires-Dist: PyYAML<7.0,>=6.0
+Requires-Dist: tqdm<5.0.0,>=4.65.0
+Provides-Extra: dev
+Requires-Dist: pytest<9.0.0,>=7.0.0; extra == "dev"
+
+# CHG-Net (PyTorch)
+
+PyTorch implementation of **CHG-Net: A Unified Direction-Aware Graph Framework for Multi-Class Trajectory Prediction** (Stanford Drone Dataset–oriented, CARLA-first CSV export).
+
+**Phase 1–2 status**: skeleton, config, utilities, SDD preprocessing, label mapping, processed dataset + collate. Graph, model, training, and CARLA export arrive in later phases.
+
+## Setup
+
+Requires **Python 3.10+**.
+
+```bash
+cd chg_net
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+pip install -U pip
+pip install -r requirements.txt
+pip install -e .
+```
+
+## Preprocess & load SDD (Phase 2)
+
+```bash
+python scripts/preprocess_data.py --config configs/sdd.yaml --defaults configs/default.yaml
+python scripts/inspect_labels.py --config configs/sdd.yaml --defaults configs/default.yaml
+```
+
+See [`docs/sdd_preprocessing.md`](docs/sdd_preprocessing.md) for annotation layout, tensor shapes, and split behavior.
+
+## Configuration
+
+- Global defaults live in [`configs/default.yaml`](configs/default.yaml) (8 observed / 12 predicted steps, 2.5 Hz, batch 64, LR 1e-3, class embedding 16, graph hidden 64, micro-TCN kernel 3 × 2 layers, GMM *K* = 3, masking *α, β, γ*).
+- Scene snippets (e.g. [`configs/little.yaml`](configs/little.yaml)) override `data.scene_filter`.
+- Load order: merge `default.yaml` first, then experiment/scene YAML; optional CLI-style overrides supported by the loader (e.g. `training.batch_size=32`). See [`chgnet/utils/config.py`](chgnet/utils/config.py).
+
+## Stanford Drone Dataset (SDD) assumptions (Phase 1)
+
+- Annotations use mixed agent categories with string labels; the pipeline will normalize raw strings to an internal taxonomy controlled by `labels.taxonomy_mode` in YAML (`full` vs `collapsed_3`). See [`data/label_mapping.md`](data/label_mapping.md) and [`docs/sdd_preprocessing.md`](docs/sdd_preprocessing.md).
+- Trajectories are subsampled or provided at **2.5 Hz** with **8** observation and **12** prediction frames per paper; exact resampling policy is documented in preprocessing docs (**Phase 2**).
+- Coordinates default to **image-plane** (dataset) space unless world/transform metadata is supplied (**engineering assumption**; documented in export docs).
+
+## CARLA export goal
+
+Primary evaluation/playback output is **structured CSV** (deterministic and multimodal modes, optional GT/combined), not PNG plots. Specification: [`docs/carla_export.md`](docs/carla_export.md). Implementation lands in **Phase 9**.
+
+## Repository layout (target)
+
+```
+chg_net/
+├── README.md
+├── requirements.txt
+├── setup.py
+├── configs/
+├── data/
+├── docs/
+├── scripts/          # Phase 2+
+├── chgnet/           # package
+├── tests/            # Phase 11
+└── outputs/
+```
+
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [`docs/implementation_notes.md`](docs/implementation_notes.md) | Paper vs engineering choices |
+| [`docs/architecture.md`](docs/architecture.md) | Module map and data flow |
+| [`docs/sdd_preprocessing.md`](docs/sdd_preprocessing.md) | SDD robustness and tensors |
+| [`docs/carla_export.md`](docs/carla_export.md) | CSV schema and coordinate policy |
+
+## License
+
+MIT (recommended; confirm with your institution before publishing).
